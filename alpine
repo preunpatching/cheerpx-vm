@@ -1,6 +1,4 @@
 FROM docker.io/i386/alpine:latest
-# Fix nameserver
-RUN printf "nameserver 1.1.1.1\nnameserver 1.0.0.1" > /etc/resolv.conf
 # Install required packages
 RUN apk update && apk add alpine-base bash bash-completion build-base curl git htop jq lua5.4 mc nano neovim nodejs npm python3 py3-pip tmux 
 # Add a user
