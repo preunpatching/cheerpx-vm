@@ -31,7 +31,7 @@ jobs:
           sudo fallocate -l ${{ github.event.inputs.IMAGE_SIZE }} cheerpx_image.ext2
           sudo mkfs.ext2 -r 0 cheerpx_image.ext2
           sudo mkdir /mnt/image/
-          sudo mount -o loop -t ext2 cheerpx_image.ext2/mnt/image/
+          sudo mount -o loop -t ext2 cheerpx_image.ext2 /mnt/image/
           
           # 2. Build Docker container & Export Filesystem
           # We use a temporary container to extract files
