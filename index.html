@@ -154,6 +154,7 @@
             // Extracts the IP address from the Tailscale netmap
             const ip = map.self.addresses[0];
             connectionStatus.innerText = `${ip}`;
+            connectionStatus.style.color = "#5a5";
         }
 
         const networkInterface = {
