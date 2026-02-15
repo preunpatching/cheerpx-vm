@@ -50,11 +50,11 @@ jobs:
 
       - name: Prepare HTML and Assets
         run: |
-          # Replace placeholders in cheerpx.html
-          sed -i 's#{{{IMAGE_URL}}}#"chunks/cheerpx_image.ext2"#g' cheerpx.html
-          sed -i 's#{{{IMAGE_TYPE}}}#"split"#g' cheerpx.html
+          # Replace placeholders in index.html
+          sed -i 's#{{{IMAGE_URL}}}#"chunks/cheerpx_image.ext2"#g' index.html
+          sed -i 's#{{{IMAGE_TYPE}}}#"split"#g' index.html
           
-          cp cheerpx.html dist/
+          cp index.html dist/
           cp coi-serviceworker.js dist/
 
       - name: Upload Pages Artifact
