@@ -44,6 +44,7 @@ jobs:
           # 2. Build Docker container & Export Filesystem
           # We use a temporary container to extract files
           sudo docker build . -f ${{ github.event.inputs.DOCKERFILE_PATH }} -o /mnt/image/ --platform=i386
+          printf "nameserver 1.1.1.1\nnameserver 1.0.0.1" > /mnt/image/etc/resolv.conf
           sudo umount /mnt/image/
 
       - name: Split Image
