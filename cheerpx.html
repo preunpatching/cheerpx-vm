@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CheerpX Virtual Machine</title>
+    
+    <!-- Xterm.js CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm/css/xterm.min.css" />
+    
+    <!-- COI Service Worker -->
+    <script src="coi-serviceworker.js"></script>
+
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; background: #000; overflow: hidden; font-family: monospace; }
+        
+        /* Layout Layers */
+        #display-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; cursor: none; }
+        #terminal-container { position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 10; }
+        
+        /* Network UI Overlay */
+        #ui-overlay {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 100;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid #333;
+        }
+
+        #connection-status {
+            color: #bbb;
+            font-size: 14px;
+        }
+
+        #connect-btn {
+            background: #333;
+            color: #fff;
+            border: 1px solid #555;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-family: inherit;
+        }
+
+        #close-btn {
+            background: #444;
+            color: #bbb;
+            border: none;
+            cursor: pointer;
+    
+            /* Create the circle */
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+    
+            /* Center the icon */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+    
+            /* Smooth transition for hover effects */
+            transition: background 0.2s, color 0.2s;
+            padding: 0; 
+        }
+
+        #close-btn:hover {
+            background: #ff5f57; /* A subtle "close" red */
+            color: #fff;
+        }
+
+        #connect-btn:hover { background: #444; }
+        #connect-btn:disabled { background: #222; color: #555; cursor: default; }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <!-- Graphical Display (Canvas) -->
+    <canvas id="display-canvas"></canvas>
+
+    <!-- Text Terminal -->
+    <div id="terminal-container"></div>
+
+    <!-- UI Overlay -->
+    <div id="ui-overlay">
+        <span id="connection-status">Disconnected</span>
+        <button id="connect-btn">Connect to Tailscale</button>
+        <button id="close-btn" aria-label="Close">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        </button>
+    </div>
+
+    <script type="module">
+        // Configuration
+        const CONFIG = {
+            IMAGE_URL: {{{IMAGE_URL}}}, IMAGE_TYPE: {{{IMAGE_TYPE}}},
+            CMD: ["/bin/bash", "--login"],
+            ENV: ["HOME=/home/user", "TERM=xterm", "USER=user", "SHELL=/bin/bash", "EDITOR=nano"],
+            CWD: "/home/user", UID: 1000, GID: 1000
+        };
+
+        // DOM Elements
+        const termContainer = document.getElementById('terminal-container');
+        const canvas = document.getElementById('display-canvas');
+        const connectionStatus = document.getElementById('connection-status');
+        const connectBtn = document.getElementById('connect-btn');
+        const closeBtn = document.getElementById('close-btn');
+        const statusLabel = document.getElementById('network-status');
+        const uiOverlay = document.getElementById('ui-overlay');
+
+        // State
+        let term = null;
+        let cx = null; // CheerpX Instance
+        let cxReadFunc = null;
+        let fitAddon = null;
+        let loginURL = null;
+        let loginWindow = null;
+
+        // --- Network Interface Implementation ---
+        // Handles communication between CheerpX and the Tailscale Login flow
+        
+        function loginUrlCb(url) {
+            connectBtn.disabled = false;
+            connectBtn.innerText = "Login to Tailscale";
+            if (url)
+                loginURL = url;
+            
+            // Redirect the popup we opened earlier
+            if (loginWindow && !loginWindow.closed) {
+                loginWindow.location.href = loginURL;
+            } else {
+                // Fallback if popup was closed or blocked (though we try to open it on click)
+                loginWindow = window.open(loginURL, "CheerpX Login", "width=800,height=600,resizable=yes,scrollbars=yes");
+            }
+        }
+
+        function stateUpdateCb(state) {
+            if (state === 6) {
+                connectBtn.classList.add('hidden');
+            }
+        }
+
+        function netmapUpdateCb(map) {
+            // Extracts the IP address from the Tailscale netmap
+            const ip = map.self.addresses[0];
+            connectionStatus.innerText = `${ip}`;
+        }
+
+        const networkInterface = {
+            authKey: undefined, 
+            controlUrl: undefined, // Set to custom control server URL if needed
+            loginUrlCb: loginUrlCb,
+            stateUpdateCb: stateUpdateCb,
+            netmapUpdateCb: netmapUpdateCb
+        };
+
+        // --- UI Interactions ---
+
+        connectBtn.addEventListener('click', () => {
+            if (!cx) return;
+            
+            connectBtn.disabled = true;
+
+            if (!loginURL) {
+                // 1. Open window immediately to prevent popup blockers
+                loginWindow = window.open("about:blank", "CheerpX Login", "width=800,height=600,resizable=yes,scrollbars=yes");
+                if (loginWindow) {
+                    loginWindow.document.write(`
+                        <body style="background:#fff;color:#000;font-family:monospace;display:flex;align-items:center;justify-content:center;height:100%;">
+                            <h3>Loading Tailscale Login...</h3>
+                        </body>
+                    `);
+                }
+
+                // 2. Trigger CheerpX network login
+                // This will eventually fire 'loginUrlCb'
+                cx.networkLogin();
+            } else {
+                loginUrlCb(null);
+            }
+        });
+
+        closeBtn.addEventListener('click', () => {
+            uiOverlay.classList.add('hidden');
+        });
+
+
+        // --- Helper: Check Cross-Origin Isolation ---
+        function checkIsolation() {
+            if (!crossOriginIsolated) {
+                const error = "Environment is not cross-origin isolated.";
+                console.error(error);
+                throw new Error(error);
+            }
+        }
+
+        // --- 1. Initialize Xterm.js ---
+        async function initTerminal() {
+            const { Terminal } = await import('https://cdn.jsdelivr.net/npm/@xterm/xterm/+esm');
+            const { FitAddon } = await import('https://cdn.jsdelivr.net/npm/@xterm/addon-fit/+esm');
+            const { WebLinksAddon } = await import('https://cdn.jsdelivr.net/npm/@xterm/addon-web-links/+esm');
+
+            term = new Terminal({
+                cursorBlink: true,
+                convertEol: true,
+                fontFamily: "monospace",
+                fontSize: 14,
+                theme: { background: '#000000' }
+            });
+
+            fitAddon = new FitAddon();
+            term.loadAddon(fitAddon);
+            term.loadAddon(new WebLinksAddon());
+
+            term.open(termContainer);
+            fitAddon.fit();
+
+            // Resize listener
+            window.addEventListener('resize', handleResize);
+            
+            // Hook input: We will feed this to CheerpX later
+            term.onData((str) => {
+                if (cxReadFunc) {
+                    for (let i = 0; i < str.length; i++) {
+                        cxReadFunc(str.charCodeAt(i));
+                    }
+                }
+            });
+
+            // Handle focus
+            termContainer.addEventListener('click', () => term.focus());
+        }
+
+        // --- 2. Initialize CheerpX ---
+        async function initCheerpX() {
+            // Dynamic Import of CheerpX
+            const CheerpX = await import('https://cdn.jsdelivr.net/npm/@leaningtech/cheerpx/+esm');
+
+            // 2a. Setup Block Device (Disk)
+            let blockDevice;
+            try {
+                if (CONFIG.IMAGE_TYPE == "single") {
+                    blockDevice = await CheerpX.HttpBytesDevice.create(CONFIG.IMAGE_URL);
+                } else if (CONFIG.IMAGE_TYPE == "split") {
+                    blockDevice = await CheerpX.GitHubDevice.create(CONFIG.IMAGE_URL);
+                } else {
+                    throw new Error("Unknown image type")
+                }
+            } catch (e) {
+                throw e;
+            }
+
+            // 2b. Setup Overlay (Persistence)
+            const blockCache = await CheerpX.IDBDevice.create("cheerpx_cache_v1");
+            const overlayDevice = await CheerpX.OverlayDevice.create(blockDevice, blockCache);
+            
+            // 2c. Setup Virtual Devices
+            const webDevice = await CheerpX.WebDevice.create("");
+            const dataDevice = await CheerpX.DataDevice.create();
+
+            const mountPoints = [
+                { type: "ext2",   dev: overlayDevice, path: "/" }, // Root
+                { type: "dir",    dev: webDevice,     path: "/web" },
+                { type: "dir",    dev: dataDevice,    path: "/data" },
+                { type: "devs",                       path: "/dev" },
+                { type: "devpts",                     path: "/dev/pts" },
+                { type: "proc",                       path: "/proc" },
+                { type: "sys",                        path: "/sys" }
+            ];
+
+            // 2d. Create Linux Instance with Network Interface
+            try {
+                cx = await CheerpX.Linux.create({
+                    mounts: mountPoints,
+                    networkInterface: networkInterface 
+                });
+            } catch (e) {
+                throw e;
+            }
+
+            // 3. Wiring Display & Terminal
+            setupDisplayIntegration();
+            term.focus();
+
+            // 4. Start System
+            await cx.run(CONFIG.CMD[0], CONFIG.CMD.slice(1), {
+                env: CONFIG.ENV,
+                cwd: CONFIG.CWD,
+                uid: CONFIG.UID,
+                gid: CONFIG.GID
+            });
+        }
+
+        // --- 3. Integration Logic (Terminal <-> Graphics) ---
+        function setupDisplayIntegration() {
+            
+            // Console Output Callback (VM -> Xterm)
+            cxReadFunc = cx.setCustomConsole((buf, vt) => {
+                // Write to xterm only if strictly necessary or for debug. 
+                // Usually VT1 is text.
+                term.write(new Uint8Array(buf));
+            }, term.cols, term.rows);
+
+            // Initial Canvas Setup
+            updateCanvasDimensions();
+
+            // Listen for VT switching (Text vs Graphics)
+            cx.setActivateConsole((vt) => {
+                if (vt === 7) {
+                    // Graphical Mode
+                    canvas.style.zIndex = 20;
+                    termContainer.style.zIndex = 0;
+                    term.blur();
+                    canvas.focus();
+                } else {
+                    // Text Mode
+                    canvas.style.zIndex = 0;
+                    termContainer.style.zIndex = 20;
+                    term.focus();
+                }
+            });
+        }
+
+        // --- Resize Logic ---
+        function handleResize() {
+            if (fitAddon) fitAddon.fit();
+            if (cx) updateCanvasDimensions();
+        }
+
+        function updateCanvasDimensions() {
+            // 1. Get browser window dimensions
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+
+            // 2. Set the physical canvas size
+            canvas.width = w;
+            canvas.height = h;
+
+            // 3. CRITICAL: Inform CheerpX to re-bind the framebuffer to the new size
+            // If this is not called on resize, the VM's framebuffer will remain 
+            // at the initial resolution, causing stretching or cropping.
+            cx.setKmsCanvas(canvas, w, h);
+        }
+
+        // --- Main Entry Point ---
+        async function boot() {
+            try {
+                await initTerminal();
+                checkIsolation();
+                await initCheerpX();
+            } catch (e) {
+                if (term) {
+                    term.write("\x1B[1;31m" + e + "\x1B[0m")
+                }
+                throw e;
+            }
+        }
+
+        boot();
+    </script>
+</body>
+</html>

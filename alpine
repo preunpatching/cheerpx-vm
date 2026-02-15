@@ -1,0 +1,8 @@
+FROM docker.io/i386/alpine:latest
+# Install required packages
+RUN apk update && apk add alpine-base bash bash-completion build-base curl git htop jq lua5.4 mc nano neovim nodejs npm python3 py3-pip tmux 
+# Add a user
+RUN adduser -D -s /bin/bash user && echo 'user:password' | chpasswd
+# Allow root login
+RUN echo 'root:password' | chpasswd
+CMD [ "/bin/bash" ]

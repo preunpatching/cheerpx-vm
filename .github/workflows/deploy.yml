@@ -1,0 +1,77 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      DOCKERFILE_PATH:
+        description: 'Path to Dockerfile'
+        required: true
+        default: 'alpine'
+      IMAGE_SIZE:
+        description: 'Size of ext2 image'
+        required: true
+        default: '500M'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Image
+        run: |
+          mkdir -p dist/
+          
+          # 1. Create the ext2 disk
+          sudo fallocate -l ${{ github.event.inputs.IMAGE_SIZE }} cheerpx_image.ext2
+          sudo mkfs.ext2 -r 0 cheerpx_image.ext2
+          sudo mkdir /mnt/image/
+          sudo mount -o loop -t ext2 cheerpx_image.ext2/mnt/image/
+          
+          # 2. Build Docker container & Export Filesystem
+          # We use a temporary container to extract files
+          sudo docker build . -f ${{ github.event.inputs.DOCKERFILE_PATH }} -o /mnt/image/ --platform=i386
+          sudo umount /mnt/image/
+
+      - name: Split Image
+        run: |
+          # Split into 128k chunks with .txt suffix
+          mkdir -p dist/chunks
+          split cheerpx_image.ext2 dist/chunks/cheerpx_image.ext2.c -a 6 -b 128k -x --additional-suffix=.txt
+          stat -c%s cheerpx_image.ext2 > dist/chunks/cheerpx_image.ext2.meta
+          
+          # Generate index.list for GitHubDevice
+          ls -1 dist/chunks/ > index.list
+
+      - name: Prepare HTML and Assets
+        run: |
+          # Replace placeholders in cheerpx.html
+          sed -i 's#{{{IMAGE_URL}}}#"chunks/cheerpx_image.ext2"#g' cheerpx.html
+          sed -i 's#{{{IMAGE_TYPE}}}#"split"#g' cheerpx.html
+          
+          cp cheerpx.html dist/
+          cp coi-serviceworker.js dist/
+
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      pages: write
+      id-token: write
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
