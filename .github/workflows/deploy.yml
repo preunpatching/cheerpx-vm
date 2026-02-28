@@ -43,7 +43,7 @@ jobs:
           
           # 2. Build Docker container & Export Filesystem
           # We use a temporary container to extract files
-          docker build . -f ${{ github.event.inputs.DOCKERFILE_PATH }} --platform=i386 --output type=tar,dest=- | tar -xf - -C /mnt/image/ --numeric-owner
+          docker build . -f ${{ github.event.inputs.DOCKERFILE_PATH }} --platform=i386 --output type=tar,dest=- | sudo tar -xf - -C /mnt/image/ --numeric-owner
           printf "nameserver 1.1.1.1\nnameserver 1.0.0.1" | sudo tee /mnt/image/etc/resolv.conf > /dev/null
           sudo umount /mnt/image/
 
