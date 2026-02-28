@@ -103,10 +103,10 @@
     <script type="module">
         // Configuration
         const CONFIG = {
-            IMAGE_URL: {{{IMAGE_URL}}}, IMAGE_TYPE: {{{IMAGE_TYPE}}},
-            CMD: ["/bin/bash", "--login"],
-            ENV: ["HOME=/home/user", "TERM=xterm", "USER=user", "SHELL=/bin/bash", "EDITOR=nano"],
-            CWD: "/home/user", UID: 1000, GID: 1000
+            IMAGE_URL: {{{IMAGE_URL}}}, IMAGE_TYPE: {{{IMAGE_TYPE}}}, // IMAGE_URL is usually some form of "image.ext2" (IMAGE_TYPE == "single") or "image_split/image.ext2" (IMAGE_TYPE == "split")
+            CMD: {{{CMD}}},
+            ENV: {{{ENV}}},
+            CWD: {{{CWD}}}, UID: {{{UID}}}, GID: {{{GID}}}
         };
 
         // DOM Elements

@@ -57,12 +57,33 @@ jobs:
           # Generate index.list for GitHubDevice
           ls -1 dist/chunks/ > index.list
 
-      - name: Prepare HTML and Assets
+      - name: Extract Image Configuration and Prepare Page
         run: |
-          # Replace placeholders in index.html
+          # 1. Extract the block between the tags
+          # We remove the "### " prefix and the key name (e.g., "CMD: ") to get just the value
+          CONFIG_BLOCK=$(sed -n '/<<<IMAGE CONFIGURATION START>>>/,/<<<IMAGE CONFIGURATION END>>>/p' ${{ github.event.inputs.DOCKERFILE_PATH }})
+
+          EXTRACT_VAL() {
+            echo "$CONFIG_BLOCK" | grep "^### $1:" | sed "s/^### $1: //"
+          }
+
+          CONF_CMD=$(EXTRACT_VAL "CMD")
+          CONF_ENV=$(EXTRACT_VAL "ENV")
+          CONF_CWD=$(EXTRACT_VAL "CWD")
+          CONF_UID=$(EXTRACT_VAL "UID")
+          CONF_GID=$(EXTRACT_VAL "GID")
+
+          # 2. Perform replacements in index.html
           sed -i 's#{{{IMAGE_URL}}}#"chunks/cheerpx_image.ext2"#g' index.html
           sed -i 's#{{{IMAGE_TYPE}}}#"split"#g' index.html
           
+          sed -i "s#{{{CMD}}}#$CONF_CMD#g" index.html
+          sed -i "s#{{{ENV}}}#$CONF_ENV#g" index.html
+          sed -i "s#{{{CWD}}}#$CONF_CWD#g" index.html
+          sed -i "s#{{{UID}}}#$CONF_UID#g" index.html
+          sed -i "s#{{{GID}}}#$CONF_GID#g" index.html
+
+          # 3. Move to dist
           cp index.html dist/
           cp coi-serviceworker.js dist/
 
