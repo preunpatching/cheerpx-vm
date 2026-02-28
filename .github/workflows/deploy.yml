@@ -10,7 +10,7 @@ on:
       IMAGE_SIZE:
         description: 'Size of ext2 image'
         required: true
-        default: '800M'
+        default: '900M'
 
 jobs:
   build:

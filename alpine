@@ -4,7 +4,7 @@ RUN adduser -D user && echo 'user:password' | chpasswd
 # Allow root login
 RUN echo 'root:password' | chpasswd
 # Install required packages
-RUN apk update && apk add --no-cache alpine-base bash bash-completion bat build-base bzip2 curl docs dust eza fd findutils fish fzf git gzip httpie jq lua5.4 man-db mc micro nano neovim nodejs npm openssl python3-dev py3-pip ripgrep sqlite starship tree unzip vim wget xz yq zip zoxide
+RUN apk update && apk add --no-cache alpine-base bash bash-completion bat build-base busybox-extras bzip2 cmake curl docs dust eza fd findutils fish fx fzf gawk git gzip httpie hexyl jo jq lua5.4 luarocks man-db mc micro nano ncdu neovim nodejs npm openssl python3 py3-pip ripgrep sd sed sqlite starship tig tree unzip vim wget xz yq zip zoxide
 # Set up Starship
 USER user
 WORKDIR /home/user
