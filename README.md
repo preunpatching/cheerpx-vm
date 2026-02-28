@@ -9,6 +9,7 @@ A better alternative to [WebVM](https://webvm.io/).
 - Comes with [Fish](https://fishshell.com/) as default shell
 - Integrated with [Starship](https://starship.rs/) out of the box
 - Terminal rendered using [Xterm.js](https://github.com/xtermjs/xterm.js/) with touch support
+- Supports [Tailscale](https://tailscale.com/) networking
 - It's free and open-source software (FOSS)... *forever*! [^1]
 
 [^1]: CheerpX is proprietary software and it's free to use only for personal and open-source projects. See [this page](https://cheerpx.io/licensing/) for more information.
