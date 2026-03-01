@@ -225,7 +225,7 @@
                     this._url = url.toString();
                     // Check if this URL is a request for a disk chunk
                     // We look for the base IMAGE_URL
-                    if (this._url.includes(CONFIG.IMAGE_URL) {
+                    if (this._url.includes(CONFIG.IMAGE_URL)) {
                         this._isIntercepted = true;
                         // We don't call super.open for intercepted requests 
                         // to avoid double-firing network events.
