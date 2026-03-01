@@ -103,7 +103,7 @@
     <script type="module">
         // Configuration
         const CONFIG = {
-            IMAGE_URL: {{{IMAGE_URL}}}, IMAGE_TYPE: {{{IMAGE_TYPE}}}, // IMAGE_URL is usually some form of "image.ext2" (IMAGE_TYPE == "single") or "image_split/image.ext2" (IMAGE_TYPE == "split")
+            IMAGE_URL: {{{IMAGE_URL}}}, IMAGE_TYPE: {{{IMAGE_TYPE}}}, // IMAGE_URL is usually some form of "image.ext2" (IMAGE_TYPE == "single") or "image_split/image.ext2" (IMAGE_TYPE == "split" or IMAGE_TYPE == "zstd")
             CMD: {{{CMD}}},
             ENV: {{{ENV}}},
             CWD: {{{CWD}}}, UID: {{{UID}}}, GID: {{{GID}}}
@@ -205,6 +205,75 @@
             }
         }
 
+        async function setupZstdProxy(ZSTDDecoder) {
+            // 1. Initialize the decoder
+            const decoder = new ZSTDDecoder();
+            await decoder.init();
+
+            // 2. Capture the original XHR
+            const OriginalXHR = window.XMLHttpRequest;
+
+            // 3. Define the Proxy
+            window.XMLHttpRequest = class extends OriginalXHR {
+                constructor() {
+                    super();
+                    this._isIntercepted = false;
+                    this._url = "";
+                }
+
+                open(method, url, ...args) {
+                    this._url = url.toString();
+                    // Check if this URL is a request for a disk chunk
+                    // We look for the base IMAGE_URL
+                    if (this._url.includes(CONFIG.IMAGE_URL) {
+                        this._isIntercepted = true;
+                        // We don't call super.open for intercepted requests 
+                        // to avoid double-firing network events.
+                    } else {
+                        super.open(method, url, ...args);
+                    }
+                }
+
+                async send(body) {
+                    if (!this._isIntercepted) {
+                        return super.send(body);
+                    }
+
+                    try {
+                        // Manually fetch the compressed chunk
+                        const response = await fetch(this._url);
+                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                
+                        const compressedBuffer = await response.arrayBuffer();
+                        const compressedArray = new Uint8Array(compressedBuffer);
+
+                        // Decompress using zstddec
+                        const decompressedData = decoder.decode(compressedArray, 131072);
+
+                        // Spoof the XHR properties
+                        Object.defineProperties(this, {
+                            readyState: { value: 4 },
+                            status: { value: 200 },
+                            response: { value: decompressedData.buffer },
+                            responseText: { value: "" },
+                        });
+
+                        // Trigger the 'load' and 'readystatechange' events CheerpX expects
+                        this.dispatchEvent(new Event('readystatechange'));
+                        this.dispatchEvent(new Event('load'));
+
+                    } catch (err) {
+                        console.error("Proxy Error:", err);
+                        Object.defineProperties(this, {
+                            readyState: { value: 4 },
+                            status: { value: 500 }
+                        });
+                        this.dispatchEvent(new Event('error'));
+                    }
+                }
+            };
+        }
+
         // --- 1. Initialize Xterm.js ---
         async function initTerminal() {
             const { Terminal } = await import('https://cdn.jsdelivr.net/npm/@xterm/xterm/+esm');
@@ -254,6 +323,9 @@
                     blockDevice = await CheerpX.HttpBytesDevice.create(CONFIG.IMAGE_URL);
                 } else if (CONFIG.IMAGE_TYPE == "split") {
                     blockDevice = await CheerpX.GitHubDevice.create(CONFIG.IMAGE_URL);
+                } else if (CONFIG.IMAGE_TYPE == "zstd") {
+                    await setupZstdProxy((await import('https://cdn.jsdelivr.net/npm/zstddec/+esm')).ZSTDDecoder);
+                    blockDevice = await CheerpX.GitHubDevice.create(CONFIG.IMAGE_URL);
                 } else {
                     throw new Error("Unknown image type")
                 }
@@ -270,8 +342,7 @@
             const dataDevice = await CheerpX.DataDevice.create();
 
             const mountPoints = [
-                { type: "ext2",   dev: overlayDevice, path: "/" }, // Root
-                { type: "dir",    dev: webDevice,     path: "/web" },
+                { type: "ext2",   dev: overlayDevice, path: "/" },
                 { type: "dir",    dev: dataDevice,    path: "/data" },
                 { type: "devs",                       path: "/dev" },
                 { type: "devpts",                     path: "/dev/pts" },

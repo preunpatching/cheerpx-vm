@@ -4,7 +4,7 @@ RUN adduser -D user && echo 'user:password' | chpasswd
 # Allow root login
 RUN echo 'root:password' | chpasswd
 # Install required packages
-RUN apk update && apk add --no-cache alpine-base bash bash-completion bat build-base busybox-extras bzip2 cmake curl docs dust eza fd findutils fish fx fzf gawk git gzip httpie hexyl jo jq lua5.4 luarocks man-db mc micro nano ncdu neovim nodejs npm openssl python3 py3-pip ripgrep sd sed sqlite starship tig tree unzip vim wget xz yq zip zoxide
+RUN apk update && apk add --no-cache alpine-base alpine-sdk bash bash-completion bat bottom build-base busybox-extras bzip2 cmake curl docs dust eza fd findutils fish fx fzf gawk git go gzip httpie hexyl jo jq lua5.4 luarocks man-db mc micro nano ncdu neovim nodejs npm openssl python3-dev py3-pip ripgrep ruby sd sed sqlite starship tig tree unzip vim wget xz yarn yazi yq zip zoxide zstd && rm -rf /var/cache/apk/*
 # Set up Starship
 USER user
 WORKDIR /home/user
@@ -14,9 +14,10 @@ RUN echo 'starship init fish | source' > .config/fish/config.fish
 RUN chmod 755 .bashrc
 RUN chmod 755 .config/fish/config.fish
 CMD [ "/usr/bin/fish" ]
+# Warning: if deployed through built-in deploy workflow, do not remove these lines below!
 ### <<<IMAGE CONFIGURATION START>>>
 ### CMD: ["/usr/bin/fish", "-l"]
-### ENV: ["HOME=/home/user", "TERM=xterm", "USER=user", "SHELL=/usr/bin/fish", "EDITOR=micro"]
+### ENV: ["HOME=/home/user", "TERM=xterm", "USER=user", "SHELL=/usr/bin/fish", "EDITOR=micro", "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"]
 ### CWD: "/home/user"
 ### UID: 1000
 ### GID: 1000

@@ -10,7 +10,7 @@ on:
       IMAGE_SIZE:
         description: 'Size of ext2 image'
         required: true
-        default: '900M'
+        default: '2G'
 
 jobs:
   build:
@@ -53,9 +53,14 @@ jobs:
           mkdir -p dist/chunks
           split cheerpx_image.ext2 dist/chunks/cheerpx_image.ext2.c -a 6 -b 128k -x --additional-suffix=.txt
           stat -c%s cheerpx_image.ext2 > dist/chunks/cheerpx_image.ext2.meta
-          
-          # Generate index.list for GitHubDevice
           ls -1 dist/chunks/ > index.list
+
+      - name: Generate Zstandard Image
+        run: |
+          for f in dist/chunks/cheerpx_image.ext2.c*.txt; do
+              zstd -19 --rm "$f" -o "$f.zst"
+              mv "$f.zst" "$f"
+          done
 
       - name: Extract Image Configuration and Prepare Page
         run: |
@@ -75,7 +80,7 @@ jobs:
 
           # 2. Perform replacements in index.html
           sed -i 's#{{{IMAGE_URL}}}#"chunks/cheerpx_image.ext2"#g' index.html
-          sed -i 's#{{{IMAGE_TYPE}}}#"split"#g' index.html
+          sed -i 's#{{{IMAGE_TYPE}}}#"zstd"#g' index.html
           
           sed -i "s#{{{CMD}}}#$CONF_CMD#g" index.html
           sed -i "s#{{{ENV}}}#$CONF_ENV#g" index.html
