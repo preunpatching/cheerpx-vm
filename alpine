@@ -4,7 +4,12 @@ RUN adduser -D user && echo 'user:password' | chpasswd
 # Allow root login
 RUN echo 'root:password' | chpasswd
 # Install required packages
-RUN apk update && apk add --no-cache alpine-base alpine-sdk bash bash-completion bat bottom build-base busybox-extras bzip2 cmake curl docs dust eza fd findutils fish fx fzf gawk git go gzip httpie hexyl jo jq lua5.4 luarocks man-db mc micro nano ncdu neovim nodejs npm openssl python3-dev py3-pip ripgrep ruby sd sed sqlite starship tig tree unzip vim wget xz yarn yazi yq zip zoxide zstd && rm -rf /var/cache/apk/*
+RUN apk update && apk add --no-cache alpine-base alpine-sdk bash bash-completion bat bottom build-base busybox-extras bzip2 cmake curl docs eza fd findutils fish fx fzf gawk gcompat git gzip httpie hexyl jo jq lua5.4 luarocks man-db mc micro nano neovim nodejs npm openssl pnpm python3-dev py3-pip ripgrep ruby sd sed sqlite starship tig tree unzip vim wget xz yarn yq zip zoxide zstd && rm -rf /var/cache/apk/*
+# Install Zig
+RUN ZIG_URL=$(curl -s https://ziglang.org/download/index.json | jq -r '.master."x86-linux".tarball') && \
+    curl -L "$ZIG_URL" | tar -xJ -C /tmp --strip-components=1 && \
+    mv /tmp/zig /usr/local/bin/zig && \
+    mv /tmp/lib /usr/local/lib/zig
 # Set up Starship
 USER user
 WORKDIR /home/user
