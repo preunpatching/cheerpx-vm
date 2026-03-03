@@ -241,8 +241,19 @@
 
                     try {
                         // Manually fetch the compressed chunk
-                        const response = await fetch(this._url);
-                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                        var i = 0
+                        var response = null;
+                        while (true) {
+                            response = await fetch(this._url);
+                            if (response.ok) break;
+                            if (i++ >= 10) throw new Error(`HTTP ${response.status}`);
+                            console.warn(`HTTP ${response.status}; retry ${i} of 10`)
+                            await new Promise((resolve, reject) => {
+                                setTimeout(() => {
+                                    resolve();
+                                }, i * 100);
+                            });
+                        }
                 
                         const compressedBuffer = await response.arrayBuffer();
                         const compressedArray = new Uint8Array(compressedBuffer);
