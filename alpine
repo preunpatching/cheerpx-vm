@@ -9,7 +9,7 @@ RUN apk update && apk add --no-cache alpine-base alpine-sdk bash bash-completion
 RUN ZIG_URL=$(curl -s https://ziglang.org/download/index.json | jq -r '.master."x86-linux".tarball') && \
     curl -L "$ZIG_URL" | tar -xJ -C /tmp --strip-components=1 && \
     mv /tmp/zig /usr/local/bin/zig && \
-    mv /tmp/lib /usr/local/lib/zig && \
+    mv /tmp/lib /usr/local/lib/zig
 # Set up Bash and Fish
 USER user
 WORKDIR /home/user
