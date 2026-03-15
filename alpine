@@ -4,18 +4,17 @@ RUN adduser -D user && echo 'user:password' | chpasswd
 # Allow root login
 RUN echo 'root:password' | chpasswd
 # Install packages
-RUN apk update && apk add --no-cache alpine-base alpine-sdk bash bash-completion bat build-base busybox-extras bzip2 choose clang cmake curl docs eza fd findutils fish fx fzf gawk gcompat gdb git gzip httpie hexyl jo jq libc6-compat llvm lua5.4 luajit luarocks man-db micro musl-dev nano neovim nodejs npm openssl pnpm python3-dev py3-pip ripgrep ruby sd sed sqlite starship tree unzip vim wget xz yarn yq zip zoxide zstd && rm -rf /var/cache/apk/*
+RUN apk update && apk add --no-cache 7zip alpine-base alpine-sdk bash bash-completion bat build-base busybox-extras bzip2 choose clang cmake curl direnv docs eza fd findutils fish fx fzf gawk gcompat gdb git gzip httpie hexyl hyperfine jo jq libc6-compat llvm lua5.4 luajit luarocks man-db micro miller musl-dev nano neovim nodejs npm openssl pnpm procs python3-dev py3-pip ripgrep ruby sd sed sqlite starship strace sysbench tree unzip vim wget xz yarn yq zip zoxide zstd && rm -rf /var/cache/apk/*
 # Install Zig
-RUN ZIG_URL=$(curl -s https://ziglang.org/download/index.json | jq -r '.master."x86-linux".tarball') && \
-    curl -L "$ZIG_URL" | tar -xJ -C /tmp --strip-components=1 && \
+RUN curl -L "$(curl -s https://ziglang.org/download/index.json | jq -r '.master."x86-linux".tarball')" | tar -xJ -C /tmp --strip-components=1 && \
     mv /tmp/zig /usr/local/bin/zig && \
     mv /tmp/lib /usr/local/lib/zig
 # Set up Bash and Fish
 USER user
 WORKDIR /home/user
-RUN printf 'eval "$(starship init bash)"\neval "$(zoxide init bash)"\neval "$(fzf --bash)"' > .bashrc
+RUN printf 'eval "$(starship init bash)"\neval "$(zoxide init bash)"\neval "$(fzf --bash)"\neval "$(direnv hook bash)"' > .bashrc
 RUN mkdir -p .config/fish
-RUN printf 'alias ls="eza"\nalias cat="bat"\nstarship init fish | source\nzoxide init fish | source\nfzf --fish | source' > .config/fish/config.fish
+RUN printf 'alias ls="eza"\nalias cat="bat"\nalias ps="procs"\nstarship init fish | source\nzoxide init fish | source\nfzf --fish | source\ndirenv hook fish | source' > .config/fish/config.fish
 RUN chmod 755 .bashrc
 RUN chmod 755 .config/fish/config.fish
 # Delete temporary files
@@ -24,7 +23,7 @@ CMD [ "/usr/bin/fish" ]
 # Warning: if deployed through built-in deploy workflow, do not remove these lines below!
 ### <<<IMAGE CONFIGURATION START>>>
 ### CMD: ["/usr/bin/fish", "-l"]
-### ENV: ["HOME=/home/user", "TERM=xterm-256color", "USER=user", "SHELL=/usr/bin/fish", "EDITOR=micro", "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"]
+### ENV: ["HOME=/home/user", "TERM=xterm", "USER=user", "SHELL=/usr/bin/fish", "EDITOR=micro", "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin", "LC_ALL=en_US.UTF-8"]
 ### CWD: "/home/user"
 ### UID: 1000
 ### GID: 1000

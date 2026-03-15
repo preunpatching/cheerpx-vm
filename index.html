@@ -290,6 +290,7 @@
             const { Terminal } = await import('https://cdn.jsdelivr.net/npm/@xterm/xterm/+esm');
             const { FitAddon } = await import('https://cdn.jsdelivr.net/npm/@xterm/addon-fit/+esm');
             const { WebLinksAddon } = await import('https://cdn.jsdelivr.net/npm/@xterm/addon-web-links/+esm');
+            const { WebglAddon } = await import('https://cdn.jsdelivr.net/npm/@xterm/addon-webgl/+esm');
 
             term = new Terminal({
                 cursorBlink: true,
@@ -302,6 +303,7 @@
             fitAddon = new FitAddon();
             term.loadAddon(fitAddon);
             term.loadAddon(new WebLinksAddon());
+            term.loadAddon(new WebglAddon());
 
             term.open(termContainer);
             fitAddon.fit();
@@ -391,7 +393,7 @@
             cxReadFunc = cx.setCustomConsole((buf, vt) => {
                 // Write to xterm only if strictly necessary or for debug. 
                 // Usually VT1 is text.
-                term.write(new Uint8Array(buf));
+                if (vt == 1) term.write(new Uint8Array(buf));
             }, term.cols, term.rows);
 
             // Initial Canvas Setup
@@ -403,7 +405,6 @@
                     // Graphical Mode
                     canvas.style.zIndex = 20;
                     termContainer.style.zIndex = 0;
-                    term.blur();
                     canvas.focus();
                 } else {
                     // Text Mode
