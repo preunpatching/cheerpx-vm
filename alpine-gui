@@ -12,19 +12,23 @@ RUN apk update && apk add \
     xorg-server \
     xf86-input-libinput \
     lightdm \
-    $(apk search -q 'xfce4*') \
-    xfwm4 \
-    xfdesktop \
-    xfconf \
-    thunar \
-    $(apk search -q 'libxfce4*') \
-    ristretto \
-    mousepad \
-    garcon \
-    tumbler \
-    parole \
-    gigolo \
-    xfdashboard \
+    $(apk search -q 'lxqt*') \
+    falkon \
+    featherpad \
+    kvantum \
+    lximage-qt \
+    menu-cache \
+    obconf-qt \
+    openbox \
+    pavucontrol-qt \
+    pcmanfm-qt \
+    qalc \
+    qps \
+    qterminal \
+    qtermwidget \
+    qtxdg-tools \
+    screengrab \
+    xdg-desktop-portal-lxqt \
     font-dejavu \
     xrandr \
     xev \
@@ -34,7 +38,7 @@ RUN apk update && apk add \
 RUN rc-update add bootmisc boot && rc-update add udev sysinit && rc-update add udev-trigger sysinit && rc-update add udev-settle sysinit && rc-update add udev-postmount default && rc-update add dbus default && rc-update add lightdm default
 RUN sed -i "s/#autologin-user=/autologin-user=user/g" /etc/lightdm/lightdm.conf && \
     sed -i "s/#autologin-user-timeout=0/autologin-user-timeout=0/g" /etc/lightdm/lightdm.conf && \
-    sed -i "s/#autologin-session=/autologin-session=xfce/g" /etc/lightdm/lightdm.conf
+    sed -i "s/#autologin-session=/autologin-session=lxqt/g" /etc/lightdm/lightdm.conf
 # Add a script to support display autoresizing
 RUN printf "while true; do\n    xev -root -event randr | while read line; do killall -q xev; done\n    xrandr --output None-0 --off\n    xrandr --auto\n    if [ -f ~/.fehbg ]; then\n        ~/.fehbg &\n    fi\ndone &" > /etc/X11/xinit/xinitrc.d/99-screen-resize.sh
 CMD [ "/bin/sh" ]
