@@ -57,9 +57,7 @@ jobs:
 
       - name: Generate Zstandard Image
         run: |
-          for f in dist/chunks/cheerpx_image.ext2.c*.txt; do
-              zstd -19 --rm "$f" -o "$f"
-          done
+          parallel -j0 "zstd -19 --rm {} -o {}.zst && mv {}.zst {}" ::: dist/chunks/cheerpx_image.ext2.c*.txt
 
       - name: Extract Image Configuration and Prepare Page
         run: |
