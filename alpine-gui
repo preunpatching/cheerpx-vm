@@ -32,7 +32,7 @@ RUN apk update && apk add \
     lxqt-themes \
     falkon \
     lximage-qt \
-    lxmenu-data
+    lxmenu-data \
     menu-cache \
     openbox \
     obconf-qt \
