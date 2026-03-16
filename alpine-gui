@@ -14,7 +14,6 @@ RUN apk update && apk add \
     lightdm \
     $(apk search -q 'lxqt*') \
     falkon \
-    featherpad \
     kvantum \
     lximage-qt \
     menu-cache \
@@ -28,7 +27,6 @@ RUN apk update && apk add \
     qtermwidget \
     qtxdg-tools \
     screengrab \
-    xdg-desktop-portal-lxqt \
     font-dejavu \
     xrandr \
     xev \
