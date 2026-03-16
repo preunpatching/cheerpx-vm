@@ -1,4 +1,4 @@
-FROM docker.io/i386/alpine:3.17
+FROM docker.io/i386/alpine:latest
 # Add a user
 RUN adduser -D user && echo 'user:password' | chpasswd
 # Allow root login
@@ -12,8 +12,14 @@ RUN apk update && apk add \
     xorg-server \
     xf86-input-libinput \
     lightdm \
-    xfce4 \
-    xfce4-terminal \
+    xfce4* \
+    xfwm4 \
+    xfdesktop \
+    xfconf \
+    thunar \
+    libxfce4* \
+    ristretto \
+    mousepad \
     font-dejavu \
     xrandr \
     xev \
