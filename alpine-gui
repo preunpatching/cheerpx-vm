@@ -12,7 +12,6 @@ RUN apk update && apk add \
     xorg-server \
     xf86-input-libinput \
     lightdm \
-    lxappearance \
     lxqt-about \
     lxqt-admin \
     lxqt-archiver \
