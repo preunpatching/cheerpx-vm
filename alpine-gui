@@ -12,14 +12,22 @@ RUN apk update && apk add \
     xorg-server \
     xf86-input-libinput \
     lightdm \
-    xfce4* \
+    $(apk search -q 'xfce4*') \
     xfwm4 \
     xfdesktop \
     xfconf \
     thunar \
-    libxfce4* \
+    $(apk search -q 'libxfce4*') \
     ristretto \
     mousepad \
+    garcon \
+    tumbler \
+    orage \
+    catfish \
+    parole \
+    xfmpc \
+    gigolo \
+    xfdashboard
     font-dejavu \
     xrandr \
     xev \
