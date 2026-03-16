@@ -22,10 +22,7 @@ RUN apk update && apk add \
     mousepad \
     garcon \
     tumbler \
-    orage \
-    catfish \
     parole \
-    xfmpc \
     gigolo \
     xfdashboard \
     font-dejavu \
