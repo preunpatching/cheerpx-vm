@@ -12,13 +12,28 @@ RUN apk update && apk add \
     xorg-server \
     xf86-input-libinput \
     lightdm \
-    $(apk search -q 'lxqt*') \
+    lxqt-about \
+    lxqt-admin \
+    lxqt-archiver \
+    lxqt-build-tools \
+    lxqt-config \
+    lxqt-desktop \
+    lxqt-globalkeys \
+    lxqt-notificationd \
+    lxqt-openssh-askpass \
+    lxqt-panel \
+    lxqt-policykit \
+    lxqt-powermanagement \
+    lxqt-qtplugin \
+    lxqt-runner \
+    lxqt-session \
+    lxqt-sudo \
+    lxqt-themes \
     falkon \
     kvantum \
     lximage-qt \
     menu-cache \
     obconf-qt \
-    openbox \
     pavucontrol-qt \
     pcmanfm-qt \
     qalc \
