@@ -30,7 +30,6 @@ RUN apk update && apk add \
     lxqt-sudo \
     lxqt-themes \
     falkon \
-    kvantum \
     lximage-qt \
     menu-cache \
     obconf-qt \
