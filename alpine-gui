@@ -12,6 +12,7 @@ RUN apk update && apk add \
     xorg-server \
     xf86-input-libinput \
     lightdm \
+    lxappearance \
     lxqt-about \
     lxqt-admin \
     lxqt-archiver \
@@ -31,7 +32,9 @@ RUN apk update && apk add \
     lxqt-themes \
     falkon \
     lximage-qt \
+    lxmenu-data
     menu-cache \
+    openbox \
     obconf-qt \
     pavucontrol-qt \
     pcmanfm-qt \
@@ -44,8 +47,9 @@ RUN apk update && apk add \
     screengrab \
     desktop-file-utils \
     shared-mime-info \
-    adwaita-icon-theme \
+    oxygen-icons \
     gvfs \
+    libpulse \
     font-dejavu \
     xrandr \
     xev \
