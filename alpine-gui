@@ -1,4 +1,4 @@
-FROM docker.io/i386/alpine:latest
+FROM docker.io/i386/alpine:3.17
 # Add a user
 RUN adduser -D user && echo 'user:password' | chpasswd
 # Allow root login
