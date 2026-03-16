@@ -26,13 +26,19 @@ RUN apk update && apk add \
     qterminal \
     qtermwidget \
     qtxdg-tools \
+    xdg-desktop-portal \
     screengrab \
+    desktop-file-utils \
+    shared-mime-info \
+    adwaita-icon-theme \
+    gvfs \
     font-dejavu \
     xrandr \
     xev \
     bash \
     dbus-x11
 # Setup the init script
+RUN update-desktop-database -q && update-mime-database /usr/share/mime
 RUN rc-update add bootmisc boot && rc-update add udev sysinit && rc-update add udev-trigger sysinit && rc-update add udev-settle sysinit && rc-update add udev-postmount default && rc-update add dbus default && rc-update add lightdm default
 RUN sed -i "s/#autologin-user=/autologin-user=user/g" /etc/lightdm/lightdm.conf && \
     sed -i "s/#autologin-user-timeout=0/autologin-user-timeout=0/g" /etc/lightdm/lightdm.conf && \
