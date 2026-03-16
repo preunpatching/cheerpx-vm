@@ -27,7 +27,7 @@ RUN apk update && apk add \
     parole \
     xfmpc \
     gigolo \
-    xfdashboard
+    xfdashboard \
     font-dejavu \
     xrandr \
     xev \
