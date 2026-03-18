@@ -4,7 +4,7 @@ RUN adduser -D user && echo 'user:password' | chpasswd
 # Allow root login
 RUN echo 'root:password' | chpasswd
 # Install packages
-RUN apk update && apk add --no-cache alpine-base udev-init-scripts udev-init-scripts-openrc eudev xorg-server xf86-input-libinput lightdm font-dejavu xrandr xev bash openbox tint2 pcmanfm picom obconf ttf-dejavu adwaita-icon-theme xterm gedit gvim
+RUN apk update && apk add --no-cache alpine-base udev-init-scripts udev-init-scripts-openrc eudev xorg-server xf86-input-libinput lightdm font-dejavu xrandr xev bash openbox tint2 pcmanfm picom ttf-dejavu adwaita-icon-theme xterm gedit gvim
 # Setup the init script
 RUN update-desktop-database -q && update-mime-database /usr/share/mime
 RUN rc-update add bootmisc boot && rc-update add udev sysinit && rc-update add udev-trigger sysinit && rc-update add udev-settle sysinit && rc-update add udev-postmount default && rc-update add dbus default && rc-update add lightdm default
