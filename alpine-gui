@@ -1,4 +1,4 @@
-FROM docker.io/i386/alpine:3.18
+FROM docker.io/i386/alpine:3.19
 # Add a user
 RUN adduser -D user && echo 'user:password' | chpasswd
 # Allow root login
@@ -14,7 +14,7 @@ sed -i "s/#autologin-session=/autologin-session=openbox/g" /etc/lightdm/lightdm.
 RUN printf "while true; do\nxev -root -event randr | while read line; do killall -q xev; done\nxrandr --output None-0 --off\nxrandr --auto\nif [ -f ~/.fehbg ]; then\n~/.fehbg &\nfi\ndone &" > /etc/X11/xinit/xinitrc.d/99-screen-resize.sh
 # Add Openbox script
 RUN mkdir -p /home/user/.config/openbox
-RUN printf 'picom & \ntint2 & \npcmanfm --desktop & \nexec openbox' > /home/user/.config/openbox/autostart && \
+RUN printf 'picom & \ntint2 & \npcmanfm --desktop' > /home/user/.config/openbox/autostart && \
 chmod +x /home/user/.config/openbox/autostart
 CMD [ "/bin/sh" ]
 # Warning: if deployed through built-in deploy workflow, do not remove these lines below!
