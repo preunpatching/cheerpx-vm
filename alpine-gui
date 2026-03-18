@@ -15,7 +15,7 @@ RUN printf "while true; do\nxev -root -event randr | while read line; do killall
 # Add Openbox script
 USER user
 RUN mkdir -p /home/user/.config/openbox
-RUN printf 'tint2 &' > /home/user/.config/openbox/autostart && chmod +x /home/user/.config/openbox/autostart
+RUN printf 'pcmanfm --desktop &' > /home/user/.config/openbox/autostart && chmod +x /home/user/.config/openbox/autostart
 CMD [ "/bin/sh" ]
 # Warning: if deployed through built-in deploy workflow, do not remove these lines below!
 ### <<<IMAGE CONFIGURATION START>>>
