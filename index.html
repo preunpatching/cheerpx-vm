@@ -388,12 +388,12 @@
 
         // --- 3. Integration Logic (Terminal <-> Graphics) ---
         function setupDisplayIntegration() {
-            
+            var currentVt = 1
             // Console Output Callback (VM -> Xterm)
             cxReadFunc = cx.setCustomConsole((buf, vt) => {
                 // Write to xterm only if strictly necessary or for debug. 
                 // Usually VT1 is text.
-                if (vt == 1) term.write(new Uint8Array(buf));
+                if (vt == currentVt) term.write(new Uint8Array(buf));
             }, term.cols, term.rows);
 
             // Initial Canvas Setup
@@ -401,7 +401,8 @@
 
             // Listen for VT switching (Text vs Graphics)
             cx.setActivateConsole((vt) => {
-                if (vt === 7) {
+                currentVt = vt
+                if (currentVt === 7) {
                     // Graphical Mode
                     canvas.style.zIndex = 20;
                     termContainer.style.zIndex = 0;
